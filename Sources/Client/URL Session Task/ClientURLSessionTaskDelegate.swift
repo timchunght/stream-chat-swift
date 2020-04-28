@@ -16,14 +16,15 @@ final class ClientURLSessionTaskDelegate: NSObject, URLSessionTaskDelegate {
                     task: URLSessionTask,
                     didSendBodyData bytesSent: Int64,
                     totalBytesSent: Int64,
-                    totalBytesExpectedToSend: Int64) {
+                    totalBytesExpectedToSend: Int64,
+                    logOptions: ClientLogger.Options) {
         guard totalBytesExpectedToSend > 51200 else {
             return
         }
         
         let progress = totalBytesExpectedToSend > 0 ? Float(Double(totalBytesSent) / Double(totalBytesExpectedToSend)) : 0
         
-        if Client.shared.logOptions.contains(.requestsInfo) {
+        if logOptions.contains(.requestsInfo) {
             let percent = (progress * 1000).rounded() / 10
             ClientLogger.log("⏫", "[\(task.taskIdentifier)] \(totalBytesSent)/\(totalBytesExpectedToSend), \(percent)%")
         }

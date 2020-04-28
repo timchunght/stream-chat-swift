@@ -26,7 +26,8 @@ public final class InternetConnection {
     public typealias OnStateChanged = (State) -> Void
     
     /// A shared Internet Connection.
-    public static let shared = InternetConnection()
+//        @available(*, deprecated)
+//    public static let shared = InternetConnection()
     
     /// A callback of the Internet connection state.
     public var onStateChanged: OnStateChanged?
@@ -46,11 +47,16 @@ public final class InternetConnection {
     public var isAvailable: Bool {
         state == .available
     }
-    
+
+    init(client: Client) {
+        self.client = client
+    }
+    private let client: Client
+
     private var lastState: State = .unknown
     private lazy var reachability: Reachability? = {
         do {
-            let reachability = try Reachability(hostname: Client.shared.baseURL.wsURL.host ?? "getstream.io")
+            let reachability = try Reachability(hostname: client.baseURL.wsURL.host ?? "getstream.io")
             reachability.whenReachable = { [unowned self] _ in self.state = .available }
             reachability.whenUnreachable = { [unowned self] _ in self.state = .unavailable }
             return reachability
@@ -101,7 +107,7 @@ public final class InternetConnection {
     // MARK: Logs
     
     func log(_ message: String) {
-        if !Client.shared.logOptions.isEmpty {
+        if !client.logOptions.isEmpty {
             ClientLogger.log("🕸", message)
         }
     }

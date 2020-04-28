@@ -10,39 +10,35 @@ import Foundation
 
 // MARK: - JSONDecoder Stream
 
-extension JSONDecoder {
-    
-    /// A default `JSONDecoder`.
-    public static var `default`: JSONDecoder = stream
-    
-    /// A Stream Chat JSON decoder.
-    public static let stream: JSONDecoder = {
-        let decoder = JSONDecoder()
-        
-        /// A custom decoding for a date.
-        decoder.dateDecodingStrategy = .custom { decoder throws -> Date in
+class StreamJSONDecoder: JSONDecoder {
+
+    let client: Client
+
+    init(client: Client) {
+        self.client = client
+        super.init()
+
+        dateDecodingStrategy = .custom { decoder throws -> Date in
             let container = try decoder.singleValueContainer()
             var dateString: String = try container.decode(String.self)
-            
+
             if !dateString.contains(".") {
                 dateString.removeLast()
                 dateString.append(".0Z")
             }
-            
+
             if let date = DateFormatter.Stream.iso8601Date(from: dateString) {
                 return date
             }
-            
+
             if dateString.hasPrefix("1970-01-01T00:00:00") {
                 print("⚠️ Invalid ISO8601 date: \(dateString)")
                 return Date()
             }
-            
+
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
         }
-        
-        return decoder
-    }()
+    }
 }
 
 // MARK: - JSONEncoder Stream
@@ -155,12 +151,12 @@ struct AnyEncodable: Encodable {
 // MARK: - Safe Helpers
 
 extension Encodable {
-    func encodeSafely(to encoder: Encoder, logMessage: String? = nil) {
+    func encodeSafely(to encoder: Encoder, logMessage: String? = nil, logger: ClientLogger?) {
         do {
             try encode(to: encoder)
         } catch {
             if let logMessage = logMessage {
-                Client.shared.logger?.log(error, message: "⚠️ \(logMessage): \(encoder)")
+                logger?.log(error, message: "⚠️ \(logMessage): \(encoder)")
             }
         }
     }

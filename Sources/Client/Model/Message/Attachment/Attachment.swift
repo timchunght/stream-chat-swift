@@ -30,7 +30,9 @@ public struct Attachment: Codable {
     /// A custom extra data type for attachments.
     /// - Note: Use this variable to setup your own extra data type for decoding attachments custom fields from JSON data.
     public static var extraDataType: Codable.Type?
-    
+
+    public let client: Client
+
     /// A title.
     public let title: String
     /// An author.
@@ -67,7 +69,8 @@ public struct Attachment: Codable {
                 url: URL? = nil,
                 imageURL: URL? = nil,
                 file: AttachmentFile? = nil,
-                extraData: Codable? = nil) {
+                extraData: Codable? = nil,
+                client: Client) {
         self.type = type
         self.url = url
         self.imageURL = imageURL
@@ -76,10 +79,17 @@ public struct Attachment: Codable {
         self.extraData = extraData
         text = nil
         author = nil
+        self.client = client
         actions = []
     }
     
     public init(from decoder: Decoder) throws {
+        guard let client = (decoder as? Client.ClientAwareJSONDecoder)?.client else {
+            // ClientAwareJSONDecoder must be used to properly decode this object.
+            throw ClientError.decodingFailure(Client.DecoderError.unsupportedDecoder)
+        }
+        self.client = client
+
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let author = try container.decodeIfPresent(String.self, forKey: .author)
         self.author = author
@@ -154,7 +164,11 @@ public struct Attachment: Codable {
         try container.encodeIfPresent(url, forKey: .assetURL)
         try container.encodeIfPresent(imageURL, forKey: .imageURL)
         try file?.encode(to: encoder)
-        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding an extra data for attachment")
+        extraData?.encodeSafely(
+            to: encoder,
+            logMessage: "📦 when encoding an extra data for attachment",
+            logger: client.logger
+        )
     }
     
     private static func fixedURL(_ urlString: String?) -> URL? {

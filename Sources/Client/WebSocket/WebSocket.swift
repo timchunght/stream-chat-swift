@@ -25,7 +25,10 @@ final class WebSocket {
     private let webSocketInitiated: Bool
     private(set) var connectionId: String?
     private(set) var eventError: ClientErrorResponse?
-    
+
+    private let internetConnection: InternetConnection
+    private let decoder: Client.ClientAwareJSONDecoder
+
     private var connectionState = ConnectionState.notConnected {
         didSet { publishEvent(.connectionChanged(connectionState)) }
     }
@@ -42,21 +45,27 @@ final class WebSocket {
     init(_ urlRequest: URLRequest,
          stayConnectedInBackground: Bool = true,
          logger: ClientLogger? = nil,
+         internetConnection: InternetConnection,
+         decoder: Client.ClientAwareJSONDecoder,
          onEvent: @escaping (Event) -> Void = { _ in }) {
         self.stayConnectedInBackground = stayConnectedInBackground
         self.logger = logger
         self.onEvent = onEvent
+        self.internetConnection = internetConnection
+        self.decoder = decoder
         webSocket = Starscream.WebSocket(request: urlRequest)
         webSocket.callbackQueue = DispatchQueue(label: "io.getstream.Chat.WebSocket", qos: .userInitiated)
         webSocketInitiated = true
         webSocket.delegate = self
     }
     
-    init() {
+    init(client: Client) {
         webSocket = .init(url: BaseURL.placeholderURL)
         webSocketInitiated = false
         stayConnectedInBackground = false
         logger = nil
+        internetConnection = client.internetConnection
+        decoder = client.jsonDecoder
         onEvent = { _ in }
     }
     
@@ -298,7 +307,7 @@ extension WebSocket: WebSocketDelegate {
     }
     
     private func isStopError(_ error: Swift.Error) -> Bool {
-        guard InternetConnection.shared.isAvailable else {
+        guard internetConnection.isAvailable else {
             return true
         }
         
@@ -322,7 +331,7 @@ extension WebSocket: WebSocketDelegate {
         eventError = nil
         
         do {
-            let event = try JSONDecoder.default.decode(Event.self, from: data)
+            let event = try decoder.decode(Event.self, from: data)
             consecutiveFailures = 0
             
             // Skip pong events.
@@ -351,7 +360,7 @@ extension WebSocket: WebSocketDelegate {
             return event
             
         } catch {
-            if let errorContainer = try? JSONDecoder.default.decode(ErrorContainer.self, from: data) {
+            if let errorContainer = try? decoder.decode(ErrorContainer.self, from: data) {
                 eventError = errorContainer.error
             } else {
                 logger?.log(error, message: "😡 Decode response")

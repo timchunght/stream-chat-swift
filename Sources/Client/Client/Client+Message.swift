@@ -66,7 +66,7 @@ public extension Client {
                      extraData: Codable? = nil,
                      to message: Message,
                      _ completion: @escaping Client.Completion<MessageResponse>) -> Cancellable {
-        let reaction = Reaction(type: type, score: score, messageId: message.id, extraData: extraData)
+        let reaction = Reaction(type: type, score: score, messageId: message.id, extraData: extraData, user: self.user)
         return request(endpoint: .addReaction(reaction), completion)
     }
     

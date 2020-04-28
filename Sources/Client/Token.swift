@@ -20,7 +20,7 @@ extension Token {
     public static let development: Token = "development"
     
     /// Checks if the token is valid.
-    public func isValidToken(userId: String = User.current.id) -> Bool {
+    public func isValidToken(userId: String) -> Bool {
         if self == .development {
             return true
         }

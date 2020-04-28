@@ -13,6 +13,14 @@ import RxCocoa
 
 // MARK: - Parsing Responses
 
+extension InternetConnection {
+    static var shared: InternetConnection { Client.shared.internetConnection }
+}
+
+extension User {
+    static var current: User { Client.shared.user }
+}
+
 extension ChannelPresenter {
     
     @discardableResult

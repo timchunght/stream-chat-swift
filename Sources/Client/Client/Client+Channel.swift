@@ -34,7 +34,8 @@ public extension Client {
                 createdBy: nil,
                 lastMessageDate: nil,
                 frozen: false,
-                config: .init())
+                config: .init(),
+                client: self)
     }
     
     /// A channel with members without id. It's great for direct message channels.
@@ -56,7 +57,8 @@ public extension Client {
                 createdBy: nil,
                 lastMessageDate: nil,
                 frozen: false,
-                config: .init())
+                config: .init(),
+                client: self)
     }
 }
 
@@ -199,7 +201,7 @@ public extension Client {
         }
         
         guard changed else {
-            completion(.success(.init(channel: channel)))
+            completion(.success(.init(channel: channel, client: self)))
             return Subscription.empty
         }
         

@@ -69,7 +69,7 @@ extension Client {
     /// - Parameter completion: a connection completion block.
     public func setAnonymousUser(_ completion: Client.Completion<UserConnection>? = nil) {
         reset()
-        userAtomic.set(.anonymous)
+        userAtomic.set(self.anonymousUser)
         tokenProvider = nil
         setup(token: "", completion)
     }
@@ -205,9 +205,9 @@ extension Client {
             // Observe Application state and handle the Client connection.
             Application.shared.onStateChanged = { [unowned self] state in self.connect(appState: state) }
             // Observe Internet connection state and handle the Client connection.
-            InternetConnection.shared.onStateChanged = { [unowned self] state in self.connect(internetConnectionState: state) }
+            internetConnection.onStateChanged = { [unowned self] state in self.connect(internetConnectionState: state) }
             // Start observing Internet connection state and get the current state.
-            InternetConnection.shared.startNotifier()
+            internetConnection.startNotifier()
             
         } catch {
             logger?.log(error)

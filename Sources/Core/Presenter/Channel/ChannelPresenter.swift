@@ -201,7 +201,8 @@ extension ChannelPresenter {
                               attachments: attachments,
                               mentionedUsers: mentionedUsers,
                               extraData: extraData,
-                              showReplyInChannel: false)
+                              showReplyInChannel: false,
+                              user: User.current)
         
         return messagePreparationCallback?(message) ?? message
     }
@@ -239,5 +240,6 @@ extension Channel {
                                        createdBy: nil,
                                        lastMessageDate: nil,
                                        frozen: true,
-                                       config: .init())
+                                       config: .init(),
+                                       client: .shared)
 }

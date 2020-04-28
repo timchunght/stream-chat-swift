@@ -9,6 +9,10 @@
 import XCTest
 @testable import StreamChatClient
 
+extension User {
+    static var current: User { Client.shared.user }
+}
+
 final class ClientTests02_Users: TestCase {
     
     func test00Users() {

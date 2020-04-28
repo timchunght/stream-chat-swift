@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7900717F2440850700E5246F /* QueryEncodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7900717D244084E200E5246F /* QueryEncodingTests.swift */; };
+		794AA6A52458641A00FE5DD7 /* Client+Coders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794AA6A42458641A00FE5DD7 /* Client+Coders.swift */; };
 		794BDE4A2434BD7400BFBA1F /* NestableCodingKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794BDE492434BD7400BFBA1F /* NestableCodingKey.swift */; };
 		79A9E4F72449D3AF00599B95 /* Data+Gzip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79A9E4F62449D3AF00599B95 /* Data+Gzip.swift */; };
 		79A9E4F92449DF2D00599B95 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79A9E4F82449DF2D00599B95 /* Reachability.swift */; };
@@ -294,6 +295,7 @@
 		465D64C1231808A2006BAE42 /* AttachmentTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentTypeTests.swift; sourceTree = "<group>"; };
 		7900717D244084E200E5246F /* QueryEncodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryEncodingTests.swift; sourceTree = "<group>"; };
 		7920E84E2449C6EF00CCBFBF /* fastlane */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fastlane; sourceTree = "<group>"; };
+		794AA6A42458641A00FE5DD7 /* Client+Coders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Client+Coders.swift"; sourceTree = "<group>"; };
 		794BDE492434BD7400BFBA1F /* NestableCodingKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NestableCodingKey.swift; sourceTree = "<group>"; };
 		795FCD1B23EB155000990F15 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		79A9E4F62449D3AF00599B95 /* Data+Gzip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Data+Gzip.swift"; sourceTree = "<group>"; };
@@ -837,6 +839,7 @@
 				8ACC7BEE241924AD000750E4 /* Client+Message.swift */,
 				8ACC7BEB241924AD000750E4 /* Client+UnreadCount.swift */,
 				8ACC7BF0241924AD000750E4 /* Client+Devices.swift */,
+				794AA6A42458641A00FE5DD7 /* Client+Coders.swift */,
 				8ACC7BF2241924AD000750E4 /* ClientError.swift */,
 				8ACC7BF5241924AD000750E4 /* ClientLogger.swift */,
 				8ACC7BF7241924AD000750E4 /* Endpoint.swift */,
@@ -1218,7 +1221,9 @@
 				8AD5EDDA22E9C7BC005CFAC9 /* Cartfile */,
 				7920E84E2449C6EF00CCBFBF /* fastlane */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		8AD5EC9022E9A3E8005CFAC9 /* Products */ = {
 			isa = PBXGroup;
@@ -1605,6 +1610,7 @@
 				8A0673B42445E0570042CFD3 /* Channel+Config.swift in Sources */,
 				8ACC7C2A241924AD000750E4 /* BanEnabling.swift in Sources */,
 				8ACC7C31241924AD000750E4 /* Client+Devices.swift in Sources */,
+				794AA6A52458641A00FE5DD7 /* Client+Coders.swift in Sources */,
 				8ACC7C09241924AD000750E4 /* Database.swift in Sources */,
 				8AA8F13D241FD2BD008FD89C /* Reaction.swift in Sources */,
 				8ACC7C1D241924AD000750E4 /* Channel+Requests.swift in Sources */,

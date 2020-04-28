@@ -40,18 +40,15 @@ public struct User: Codable {
     /// A custom extra data type for users.
     /// - Note: Use this variable to setup your own extra data type for decoding users custom fields from JSON data.
     public static var extraDataType: UserExtraDataCodable.Type = UserExtraData.self
-    
-    /// An unkown user.
-    public static let unknown = User(id: "unknown_\(UUID().uuidString)")
-    
+
     /// Checks if the user is unknown.
-    public var isUnknown: Bool { self == User.unknown }
-    
-    /// An anonymous user.
-    public static let anonymous = User(id: UUID().uuidString, role: .anonymous)
-    
+    public var isUnknown: Bool { self == client.unknownUser }
+
     static var flaggedUsers = Set<User>()
-    
+
+    /// The client instance this channel uses to communicate with the servers.
+    public let client: Client
+
     /// A user id.
     public let id: String
     /// A created date.
@@ -77,13 +74,15 @@ public struct User: Codable {
     /// Muted users.
     public internal(set) var mutedUsers: [MutedUser]
     /// Check if the user is the current user.
-    public var isCurrent: Bool { self == Client.shared.user }
-    /// The current user.
-    public static var current: User { Client.shared.user }
+    public var isCurrent: Bool { self == client.user }
+
+//    /// The current user.
+//    public static var current: User { Client.shared.user }
+
     /// Checks if the user can be muted.
     public var canBeMuted: Bool { !isCurrent }
     /// Checks if the user is muted.
-    public var isMuted: Bool { isCurrent ? false : Client.shared.user.mutedUsers.first(where: { $0.user == self }) != nil }
+    public var isMuted: Bool { isCurrent ? false : client.user.mutedUsers.first(where: { $0.user == self }) != nil }
     /// Returns the user as a member.
     public var asMember: Member { Member(self) }
     /// Checks if the user is flagged (locally).
@@ -116,7 +115,8 @@ public struct User: Codable {
                 lastActiveDate: Date? = nil,
                 isInvisible: Bool = false,
                 isBanned: Bool = false,
-                mutedUsers: [MutedUser] = []) {
+                mutedUsers: [MutedUser] = [],
+                client: Client) {
         self.id = id
         self.role = role
         self.extraData = extraData
@@ -126,6 +126,7 @@ public struct User: Codable {
         self.isInvisible = isInvisible
         self.isBanned = isBanned
         self.mutedUsers = mutedUsers
+        self.client = client
         isOnline = false
         devices = []
     }
@@ -152,19 +153,30 @@ public struct User: Codable {
             
             self.extraData = extraData
         }
-        
-        if id == Client.shared.user.id,
+
+        guard let client = (decoder as? Client.ClientAwareJSONDecoder)?.client else {
+            // ClientAwareJSONDecoder must be used to properly decode this object.
+            throw ClientError.decodingFailure(Client.DecoderError.unsupportedDecoder)
+        }
+
+        self.client = client
+
+        if id == client.user.id,
             let channelsUnreadCount = try container.decodeIfPresent(Int.self, forKey: .channelsUnreadCount),
             let messagesUnreadCount = try container.decodeIfPresent(Int.self, forKey: .messagesUnreadCount) {
             let unreadCount = UnreadCount(channels: channelsUnreadCount, messages: messagesUnreadCount)
-            Client.shared.unreadCountAtomic.set(unreadCount)
+            client.unreadCountAtomic.set(unreadCount)
         }
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding a user extra data")
+        extraData?.encodeSafely(
+            to: encoder,
+            logMessage: "📦 when encoding a user extra data",
+            logger: client.logger
+        )
         
         if isInvisible {
             try container.encode(isInvisible, forKey: .isInvisible)

@@ -49,6 +49,9 @@ public final class Channel: Codable {
     /// A custom extra data type for channels.
     /// - Note: Use this variable to setup your own extra data type for decoding channels custom fields from JSON data.
     public static var extraDataType: ChannelExtraDataCodable.Type = ChannelExtraData.self
+
+    /// The client instance this channel uses to communicate with the servers.
+    public let client: Client
     
     /// A channel type.
     public let type: ChannelType
@@ -79,7 +82,7 @@ public final class Channel: Codable {
     /// Check if the channel was deleted.
     public var isDeleted: Bool { deleted != nil }
     /// Checks if read events evalable for the current user.
-    public var readEventsEnabled: Bool { config.readEventsEnabled && members.contains(Member.current) }
+    public var readEventsEnabled: Bool { config.readEventsEnabled && members.contains(client.user.asMember) }
     /// Returns the current unread count.
     public var unreadCount: ChannelUnreadCount { unreadCountAtomic.get(default: .noUnread) }
     
@@ -113,7 +116,7 @@ public final class Channel: Codable {
     /// Checks if the channel was decoded from a channel response.
     public let didLoad: Bool
     /// Checks if the channel is watching by the client.
-    public var isWatched: Bool { Client.shared.isWatching(channel: self) }
+    public var isWatched: Bool { client.isWatching(channel: self) }
     
     private var subscriptionBag = SubscriptionBag()
     
@@ -130,7 +133,8 @@ public final class Channel: Codable {
                 createdBy: User?,
                 lastMessageDate: Date?,
                 frozen: Bool,
-                config: Config) {
+                config: Config,
+                client: Client) {
         self.type = type
         self.id = id
         self.cid = ChannelId(type: type, id: id)
@@ -143,10 +147,16 @@ public final class Channel: Codable {
         self.lastMessageDate = lastMessageDate
         self.frozen = frozen
         self.config = config
+        self.client = client
         didLoad = false
     }
     
     public required init(from decoder: Decoder) throws {
+        guard let client = (decoder as? Client.ClientAwareJSONDecoder)?.client else {
+            // ClientAwareJSONDecoder must be used to properly decode this object.
+            throw ClientError.decodingFailure(Client.DecoderError.unsupportedDecoder)
+        }
+
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         type = try container.decode(ChannelType.self, forKey: .type)
         let id = try container.decode(String.self, forKey: .id)
@@ -164,6 +174,7 @@ public final class Channel: Codable {
         lastMessageDate = try container.decodeIfPresent(Date.self, forKey: .lastMessageDate)
         frozen = try container.decode(Bool.self, forKey: .frozen)
         didLoad = true
+        self.client = client
     }
     
     deinit {
@@ -172,7 +183,11 @@ public final class Channel: Codable {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
-        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding a channel extra data")
+        extraData?.encodeSafely(
+            to: encoder,
+            logMessage: "📦 when encoding a channel extra data",
+            logger: client.logger
+        )
         
         var allMembers = members
         
@@ -223,7 +238,7 @@ extension Channel {
                           _ callback: @escaping Client.OnEvent) -> Cancellable {
         let validEvents = eventTypes.intersection(EventType.channelEventTypes)
         
-        if validEvents.count != eventTypes.count, let logger = Client.shared.logger {
+        if validEvents.count != eventTypes.count, let logger = client.logger {
             let notValidEvents = eventTypes.subtracting(EventType.channelEventTypes)
             logger.log("⚠️ The events \(notValidEvents) are not channel events "
                 + "and will never get handled by your completion handler. "
@@ -234,19 +249,19 @@ extension Channel {
             return Subscription { _ in }
         }
         
-        let subscription = Client.shared.subscribe(forEvents: validEvents, cid: cid, callback)
+        let subscription = client.subscribe(forEvents: validEvents, cid: cid, callback)
         subscriptionBag.add(subscription)
         return subscription
     }
     
     public func subscribeToUnreadCount(_ callback: @escaping Client.Completion<ChannelUnreadCount>) -> Cancellable {
-        let subscription = Client.shared.subscribeToUnreadCount(for: self, callback)
+        let subscription = client.subscribeToUnreadCount(for: self, callback)
         subscriptionBag.add(subscription)
         return subscription
     }
     
     public func subscribeToWatcherCount(_ callback: @escaping Client.Completion<Int>) -> Cancellable {
-        let subscription = Client.shared.subscribeToWatcherCount(for: self, callback)
+        let subscription = client.subscribeToWatcherCount(for: self, callback)
         subscriptionBag.add(subscription)
         return subscription
     }

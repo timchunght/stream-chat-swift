@@ -204,7 +204,8 @@ public final class UploaderItem: Equatable {
                     self.attachment = Attachment(type: .image,
                                                  title: self.fileName,
                                                  imageURL: fileURL,
-                                                 extraData: self.extraData)
+                                                 extraData: self.extraData,
+                                                 client: .shared)
                 } else {
                     let fileAttachment = AttachmentFile(type: self.fileType,
                                                         size: self.fileSize,
@@ -214,7 +215,8 @@ public final class UploaderItem: Equatable {
                                                  title: self.fileName,
                                                  url: fileURL,
                                                  file: fileAttachment,
-                                                 extraData: self.extraData)
+                                                 extraData: self.extraData,
+                                                 client: .shared)
                 }
             })
             .share()

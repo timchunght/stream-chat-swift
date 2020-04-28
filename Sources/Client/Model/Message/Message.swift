@@ -130,8 +130,9 @@ public struct Message: Codable {
                 ownReactions: [Reaction] = [],
                 reactionScores: [String: Int] = [:],
                 replyCount: Int = 0,
-                showReplyInChannel: Bool = false) {
-        user = User.current
+                showReplyInChannel: Bool = false,
+                user: User) {
+        self.user = user
         self.id = id
         self.type = type
         self.parentId = parentId
@@ -154,7 +155,11 @@ public struct Message: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(text, forKey: .text)
-        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding a message extra data")
+        extraData?.encodeSafely(
+            to: encoder,
+            logMessage: "📦 when encoding a message extra data",
+            logger: user.client.logger
+        )
         
         if !attachments.isEmpty {
             try container.encode(attachments, forKey: .attachments)

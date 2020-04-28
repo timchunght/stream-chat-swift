@@ -10,6 +10,13 @@ import UIKit
 
 /// A network client.
 public final class Client {
+
+    /// An unknown user.
+    public lazy var unknownUser = User(id: "unknown_\(UUID().uuidString)", client: self)
+
+    /// An anonymous user.
+    public lazy var anonymousUser = User(id: "unknown_\(UUID().uuidString)", role: .anonymous, client: self)
+
     /// A client completion block type.
     public typealias Completion<T: Decodable> = (Result<T, ClientError>) -> Void
     /// A client progress block type.
@@ -20,6 +27,8 @@ public final class Client {
     /// A client config (see `Config`).
     public static var config = Config(apiKey: "")
     /// A shared client.
+
+    @available(*, deprecated)
     public static let shared = Client()
     
     /// Stream API key.
@@ -41,7 +50,9 @@ public final class Client {
     /// A log manager.
     public let logger: ClientLogger?
     public let logOptions: ClientLogger.Options
-    
+
+    public lazy var internetConnection: InternetConnection = .init(client: self)
+
     // MARK: Token
     
     var token: Token?
@@ -53,7 +64,8 @@ public final class Client {
     // MARK: WebSocket
     
     /// A web socket client.
-    lazy var webSocket = WebSocket()
+    lazy var webSocket = WebSocket(client: self)
+
     /// Check if API key and token are valid and the web socket is connected.
     public var isConnected: Bool { !apiKey.isEmpty && webSocket.isConnected }
     var needsToRecoverConnection = false
@@ -68,7 +80,7 @@ public final class Client {
     // MARK: User Events
     
     /// The current user.
-    public var user: User { userAtomic.get() ?? .unknown }
+    public var user: User { userAtomic.get() ?? self.unknownUser }
     
     var onUserUpdateObservers = [String: OnUpdate<User>]()
     
@@ -89,7 +101,12 @@ public final class Client {
             self.onUnreadCountUpdateObservers.values.forEach({ $0(unreadCount) })
         }
     }
-    
+
+    // MARK: Coding
+
+    lazy private(set) var jsonDecoder: ClientAwareJSONDecoder = .init(client: self)
+
+
     /// Weak references to channels by cid.
     let watchingChannelsAtomic = Atomic<[ChannelId: [WeakRef<Channel>]]>([:])
     
@@ -124,7 +141,7 @@ public final class Client {
         self.database = database
         self.logOptions = logOptions
         logger = logOptions.logger(icon: "🐴", for: [.requestsError, .requests, .requestsInfo])
-        
+
         #if DEBUG
         checkLatestVersion()
         #endif
@@ -158,7 +175,8 @@ public final class Client {
     ///   - `disconnectInBackground()`
     /// - Parameter appState: an application state.
     func connect(appState: UIApplication.State = UIApplication.shared.applicationState,
-                 internetConnectionState: InternetConnection.State = InternetConnection.shared.state) {
+                 internetConnectionState: InternetConnection.State? = nil) {
+        let internetConnectionState = internetConnectionState ?? internetConnection.state
         guard internetConnectionState == .available else {
             if internetConnectionState == .unavailable {
                 reset()
@@ -179,7 +197,7 @@ public final class Client {
         logger?.log("Disconnecting deliberately...")
         reset()
         Application.shared.onStateChanged = nil
-        InternetConnection.shared.stopNotifier()
+        internetConnection.stopNotifier()
     }
     
     /// Disconnect the websocket and reset states.

@@ -157,7 +157,7 @@ extension Client {
         // Return the current unread count.
         callback(.success(channel.unreadCount))
         
-        if channel.didLoad, !channel.members.contains(Member.current) {
+        if channel.didLoad, !channel.members.contains(user.asMember) {
             logger?.log("⚠️ The current user is not a member of the channel: (\(channel.cid)) "
                 + "to get updates for the unread count.")
         }

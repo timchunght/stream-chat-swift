@@ -14,6 +14,10 @@ import RxSwift
 import RxCocoa
 import RxGesture
 
+extension User {
+    static var current: User { Client.shared.user }
+}
+
 final class ReactionsView: UIView {
     typealias Completion = (_ selectedType: String, _ score: Int) -> Bool?
     
@@ -67,7 +71,7 @@ final class ReactionsView: UIView {
             if let ownReaction = message.ownReactions.first(where: { $0.type == reactionType }) {
                 reaction = ownReaction
             } else {
-                reaction = Reaction(type: reactionType, score: score, messageId: message.id)
+                reaction = Reaction(type: reactionType, score: score, messageId: message.id, user: .current)
             }
             
             let emojiView = createEmojiView(emoji: emoji.emoji,

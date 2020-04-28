@@ -50,7 +50,7 @@ public struct Reaction: Codable {
                 score: Int = 1,
                 messageId: String,
                 extraData: Codable? = nil,
-                user: User? = .current,
+                user: User,
                 created: Date = Date()) {
         self.type = type
         self.score = score
@@ -74,7 +74,7 @@ public struct Reaction: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(type, forKey: .type)
         try container.encode(score, forKey: .score)
-        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding a reaction extra data")
+        extraData?.encodeSafely(to: encoder, logMessage: "📦 when encoding a reaction extra data", logger: user?.client.logger)
     }
 }
 

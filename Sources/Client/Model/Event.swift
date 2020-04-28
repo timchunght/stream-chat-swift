@@ -254,6 +254,11 @@ public enum Event: Decodable {
     // MARK: Decoder
     
     public init(from decoder: Decoder) throws {
+        guard let client = (decoder as? Client.ClientAwareJSONDecoder)?.client else {
+            // ClientAwareJSONDecoder must be used to properly decode this object.
+            throw ClientError.decodingFailure(Client.DecoderError.unsupportedDecoder)
+        }
+
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let type = try container.decode(EventType.self, forKey: .type)
         
@@ -383,7 +388,7 @@ public enum Event: Decodable {
         case .notificationMutesUpdated:
             self = try .notificationMutesUpdated(container.decode(User.self, forKey: .me), cid(), type)
         case .notificationMarkRead:
-            let messageRead = try MessageRead(user: .current, lastReadDate: created())
+            let messageRead = try MessageRead(user: client.user, lastReadDate: created())
             
             if let channel = try optionalChannel() {
                 self = try .notificationMarkRead(messageRead, channel, unreadCount(), type)

@@ -12,6 +12,10 @@ import StreamChatCore
 
 // MARK: - Table Footer View
 
+extension InternetConnection {
+    static var shared: InternetConnection { Client.shared.internetConnection }
+}
+
 extension ChatViewController {
     
     func updateFooterView() {

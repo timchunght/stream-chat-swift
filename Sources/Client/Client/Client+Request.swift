@@ -278,7 +278,7 @@ extension Client {
         }
         
         guard httpResponse.statusCode < 400 else {
-            if let errorResponse = try? JSONDecoder.default.decode(ClientErrorResponse.self, from: data) {
+            if let errorResponse = try? jsonDecoder.decode(ClientErrorResponse.self, from: data) {
                 if errorResponse.message.contains("was deactivated") {
                     webSocket.disconnect(reason: "JSON response error: the client was deactivated")
                 }
@@ -297,7 +297,7 @@ extension Client {
         }
         
         do {
-            let response = try JSONDecoder.default.decode(T.self, from: data)
+            let response = try jsonDecoder.decode(T.self, from: data)
             performInCallbackQueue { completion(.success(response)) }
         } catch {
             logger?.log(error)
@@ -334,7 +334,7 @@ extension Client {
                 return
             }
             do {
-                let podTrunk = try JSONDecoder().decode(PodTrunk.self, from: data)
+                let podTrunk = try Foundation.JSONDecoder().decode(PodTrunk.self, from: data)
                 if let latestVersion = podTrunk.versions.last?.name, latestVersion > Environment.version {
                     ClientLogger.logger("📢", "", "StreamChat \(latestVersion) is released (you are on \(Environment.version)). "
                         + "It's recommended to update to the latest version.")

@@ -44,7 +44,13 @@ extension Client {
         var request = URLRequest(url: url)
         request.allHTTPHeaderFields = authHeaders(token: token)
         
-        return WebSocket(request, stayConnectedInBackground: stayConnectedInBackground, logger: logger) { [unowned self] event in
+        return WebSocket(
+            request,
+            stayConnectedInBackground: stayConnectedInBackground,
+            logger: logger,
+            internetConnection: self.internetConnection,
+            decoder: self.jsonDecoder) { [unowned self] event in
+
             guard case .connectionChanged(let connectionState) = event else {
                 if case .notificationMutesUpdated(let user, _, _) = event {
                     self.userAtomic.set(user)

@@ -300,7 +300,7 @@ final class ClientTests01_Channels: TestCase {
         var createdMessage: Message?
         
         expect("a message sent") { expectation in
-            let message = Message(text: text)
+            let message = Message(text: text, user: .current)
             client.send(message: message, to: channel) {
                 if let response = $0.value {
                     XCTAssertEqual(response.message.text, text)

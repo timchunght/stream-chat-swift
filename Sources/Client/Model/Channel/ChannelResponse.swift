@@ -25,8 +25,17 @@ public struct ChannelResponse: Decodable {
     public let messages: [Message]
     /// Message read states (see `MessageRead`)
     public let messageReads: [MessageRead]
-    
+
+    /// The client instance this object uses to communicate with the servers.
+    public let client: Client
+
     public init(from decoder: Decoder) throws {
+        guard let client = (decoder as? Client.ClientAwareJSONDecoder)?.client else {
+            // ClientAwareJSONDecoder must be used to properly decode this object.
+            throw ClientError.decodingFailure(Client.DecoderError.unsupportedDecoder)
+        }
+        self.client = client
+
         let container = try decoder.container(keyedBy: CodingKeys.self)
         channel = try container.decode(Channel.self, forKey: .channel)
         messages = try container.decodeIfPresent([Message].self, forKey: .messages) ?? []
@@ -58,10 +67,12 @@ public struct ChannelResponse: Decodable {
     ///   - channel: a channel.
     ///   - members: members of the channel.
     ///   - messages: messages in the channel.
-    public init(channel: Channel, messages: [Message] = [], messageReads: [MessageRead] = []) {
+    public init(channel: Channel, messages: [Message] = [], messageReads: [MessageRead] = [], client: Client) {
         self.channel = channel
         self.messages = messages
         self.messageReads = messageReads
+        self.client = client
+
         channel.unreadMessageReadAtomic.set(userUnreadMessageRead())
     }
     
@@ -70,14 +81,14 @@ public struct ChannelResponse: Decodable {
     }
     
     private func calculateChannelUnreadCount() {
-        if messages.isEmpty || !channel.members.contains(Member.current) {
+        if messages.isEmpty || !channel.members.contains(self.client.user.asMember) {
             return
         }
         
         let unreadMessageRead = userUnreadMessageRead()
         channel.unreadMessageReadAtomic.set(unreadMessageRead)
         var unreadCount = ChannelUnreadCount.noUnread
-        let currentUser = Client.shared.user
+        let currentUser = client.user
         
         if let unreadMessageRead = unreadMessageRead {
             for message in messages.reversed() {
