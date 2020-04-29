@@ -11,7 +11,7 @@ import Foundation
 // MARK: - Client Configuration
 
 extension Client {
-    /// A config for a shread `Client`.
+    /// A configuration object for `Client`.
     public struct Config {
         /// A Stream Chat API key.
         public let apiKey: String
@@ -25,8 +25,10 @@ extension Client {
         public let database: Database?
         /// Enable logs (see `ClientLogger.Options`), e.g. `.all`.
         public let logOptions: ClientLogger.Options
+        /// The URLSessionConfiguration the Client uses as the default configuration.
+        public let defaultURLSessionConfiguration: URLSessionConfiguration
         
-        /// Init a config for a shread `Client`.
+        /// Init a config for a shared `Client`.
         /// - Parameters:
         ///     - apiKey: a Stream Chat API key.
         ///     - baseURL: a base URL (see `BaseURL`).
@@ -35,18 +37,22 @@ extension Client {
         ///     - database: a database manager.
         ///     - callbackQueue: a request callback queue, default nil (some background thread).
         ///     - logOptions: enable logs (see `ClientLogger.Options`), e.g. `.all`
+        ///     - defaultURLSessionConfiguration: the URLSessionConfiguration the Client uses as
+        ///     the default configuration.
         public init(apiKey: String,
                     baseURL: BaseURL = .usEast,
                     stayConnectedInBackground: Bool = true,
                     database: Database? = nil,
                     callbackQueue: DispatchQueue? = nil,
-                    logOptions: ClientLogger.Options = []) {
+                    logOptions: ClientLogger.Options = [],
+                    defaultURLSessionConfiguration: URLSessionConfiguration = .default) {
             self.apiKey = apiKey
             self.baseURL = baseURL
             self.stayConnectedInBackground = stayConnectedInBackground
             self.database = database
             self.callbackQueue = callbackQueue
             self.logOptions = logOptions
+            self.defaultURLSessionConfiguration = defaultURLSessionConfiguration
         }
         
         /// Init a config for the shared `Client`.
