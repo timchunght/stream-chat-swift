@@ -14,17 +14,17 @@ extension Client {
     /// A config for a shread `Client`.
     public struct Config {
         /// A Stream Chat API key.
-        public let apiKey: String
+        public var apiKey: String
         /// A base URL (see `BaseURL`).
-        public let baseURL: BaseURL
+        public var baseURL: BaseURL
         /// A request callback queue, default nil (some background thread).
-        public let callbackQueue: DispatchQueue?
+        public var callbackQueue: DispatchQueue?
         /// When the app will go to the background, start a background task to stay connected for 5 min.
-        public let stayConnectedInBackground: Bool
+        public var stayConnectedInBackground: Bool
         /// A local database.
-        public let database: Database?
+        public var database: Database?
         /// Enable logs (see `ClientLogger.Options`), e.g. `.all`.
-        public let logOptions: ClientLogger.Options
+        public var logOptions: ClientLogger.Options
         
         /// Init a config for a shread `Client`.
         /// - Parameters:

@@ -18,9 +18,42 @@ public final class Client: Uploader {
     public typealias OnEvent = (Event) -> Void
     
     /// A client config (see `Config`).
-    public static var config = Config(apiKey: "")
+    @available(*, deprecated, message: """
+    Configuring the shared Client using the static `Client.config` variable has been depreacted. Please create an instance
+    of the `Client.Config` struct and call `Client.configure(_:)` to set up the shared instance of Client.
+    """)
+    public static var config: Config {
+        get { config_backwardCompatibility }
+        set { config_backwardCompatibility = newValue }
+    }
+    /// We need this value to avoid deprecation warnings when keeping backward compatibility. This can be removed
+    /// once we remove the deprecated methods completely.
+    private static var config_backwardCompatibility = Config(apiKey: "")
+
+    /// Configures the shared instance of `Client`.
+    ///
+    /// - Parameter configuration: The configuration object with details of how the shared instance should be set up.
+    ///
+    public static func configure(_ configuration: Config) {
+        sharedClientFactory = { Client(configuration: configuration) }
+    }
+
     /// A shared client.
-    public static let shared = Client()
+    public private(set) static var shared: Client = sharedClientFactory()
+
+    private static var sharedClientFactory: () -> Client = {
+        // This closure is here only for backward compatibility. Only uses who haven't called `Client.configute(_:)`
+        // see the warning below and the shared client in initialized the old way.
+        //
+        // Calling `Client.configute(_:)` replaces this factory closure and uses the new way of
+        // the initialization of the shared client.
+
+        ClientLogger.logger("⚠️", "", "Configuring the shared Client using the static `Client.config` variable " +
+            "has been depreacted. Please create an instance of the `Client.Config` struct and call `Client.configure(_:)` " +
+            "to set up the shared instance of Client."
+        )
+        return Client(configuration: Client.config_backwardCompatibility)
+    }
     
     /// Stream API key.
     /// - Note: If you will change API key the Client will be disconnected and the current user will be logged out.
@@ -93,21 +126,19 @@ public final class Client: Uploader {
     /// Weak references to channels by cid.
     let watchingChannelsAtomic = Atomic<[ChannelId: [WeakRef<Channel>]]>([:])
     
-    /// Init a network client.
-    /// - Parameters:
-    ///   - apiKey: a Stream Chat API key.
-    ///   - baseURL: a base URL (see `BaseURL`).
-    ///   - stayConnectedInBackground: when the app will go to the background,
-    ///                                start a background task to stay connected for 5 min.
-    ///   - database: a database manager (in development).
-    ///   - callbackQueue: a request callback queue, default nil (some background thread).
-    ///   - logOptions: enable logs (see `ClientLogger.Options`), e.g. `.info`.
-    init(apiKey: String = Client.config.apiKey,
-         baseURL: BaseURL = Client.config.baseURL,
-         stayConnectedInBackground: Bool = Client.config.stayConnectedInBackground,
-         database: Database? = Client.config.database,
-         callbackQueue: DispatchQueue? = Client.config.callbackQueue,
-         logOptions: ClientLogger.Options = Client.config.logOptions) {
+    /// Creates a new isntance of the network client.
+    ///
+    /// - Parameter configuration: The configuration object with details of how the new instance should be set up.
+    ///
+    init(configuration: Client.Config) {
+        self.apiKey = configuration.apiKey
+        self.baseURL = configuration.baseURL
+        self.callbackQueue = configuration.callbackQueue ?? .global(qos: .userInitiated)
+        self.stayConnectedInBackground = configuration.stayConnectedInBackground
+        self.database = configuration.database
+        self.logOptions = configuration.logOptions
+        logger = logOptions.logger(icon: "🐴", for: [.requestsError, .requests, .requestsInfo])
+
         if !apiKey.isEmpty, logOptions.isEnabled {
             ClientLogger.logger("💬", "", "Stream Chat v.\(Environment.version)")
             ClientLogger.logger("🔑", "", apiKey)
@@ -117,15 +148,7 @@ public final class Client: Uploader {
                 ClientLogger.logger("💽", "", "\(database.self)")
             }
         }
-        
-        self.apiKey = apiKey
-        self.baseURL = baseURL
-        self.callbackQueue = callbackQueue ?? .global(qos: .userInitiated)
-        self.stayConnectedInBackground = stayConnectedInBackground
-        self.database = database
-        self.logOptions = logOptions
-        logger = logOptions.logger(icon: "🐴", for: [.requestsError, .requests, .requestsInfo])
-        
+
         #if DEBUG
         checkLatestVersion()
         #endif
