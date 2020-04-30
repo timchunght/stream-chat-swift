@@ -57,8 +57,10 @@ public final class Client: Uploader {
     /// Check if API key and token are valid and the web socket is connected.
     public var isConnected: Bool { !apiKey.isEmpty && webSocket.isConnected }
     var needsToRecoverConnection = false
-    
-    lazy var urlSession = URLSession(configuration: .default)
+
+    let defaultURLSessionConfiguration: URLSessionConfiguration
+    lazy var urlSession = URLSession(configuration: self.defaultURLSessionConfiguration)
+
     lazy var urlSessionTaskDelegate = ClientURLSessionTaskDelegate() // swiftlint:disable:this weak_delegate
     let callbackQueue: DispatchQueue?
     
@@ -102,12 +104,15 @@ public final class Client: Uploader {
     ///   - database: a database manager (in development).
     ///   - callbackQueue: a request callback queue, default nil (some background thread).
     ///   - logOptions: enable logs (see `ClientLogger.Options`), e.g. `.info`.
+    ///   - defaultURLSessionConfiguration: the URLSessionConfiguration the Client uses as
+    ///     the default configuration.
     init(apiKey: String = Client.config.apiKey,
          baseURL: BaseURL = Client.config.baseURL,
          stayConnectedInBackground: Bool = Client.config.stayConnectedInBackground,
          database: Database? = Client.config.database,
          callbackQueue: DispatchQueue? = Client.config.callbackQueue,
-         logOptions: ClientLogger.Options = Client.config.logOptions) {
+         logOptions: ClientLogger.Options = Client.config.logOptions,
+         defaultURLSessionConfiguration: URLSessionConfiguration = Client.config.defaultURLSessionConfiguration) {
         if !apiKey.isEmpty, logOptions.isEnabled {
             ClientLogger.logger("💬", "", "Stream Chat v.\(Environment.version)")
             ClientLogger.logger("🔑", "", apiKey)
@@ -123,6 +128,7 @@ public final class Client: Uploader {
         self.callbackQueue = callbackQueue ?? .global(qos: .userInitiated)
         self.stayConnectedInBackground = stayConnectedInBackground
         self.database = database
+        self.defaultURLSessionConfiguration = defaultURLSessionConfiguration
         self.logOptions = logOptions
         logger = logOptions.logger(icon: "🐴", for: [.requestsError, .requests, .requestsInfo])
         
